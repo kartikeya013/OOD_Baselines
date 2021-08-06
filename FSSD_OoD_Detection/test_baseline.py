@@ -23,7 +23,7 @@ parser.add_argument('-m','--model_arch', type=str, help='model architecture', re
 parser.add_argument('-b','--batch_size', type=int, default=64)
 parser.add_argument('--dataroot',type=str, help='datatset stroage directory',default='./data/datasets')
 parser.add_argument('--test_oe', action='store_true', help='whether to use model trained with outlier exposure')
-parser.add_argument('--rotation', type=int, default=30, help='rotation angle in case of MNIST dataset')
+# parser.add_argument('--rotation', type=int, default=30, help='rotation angle in case of MNIST dataset')
 args = vars(parser.parse_args())
 print(args)
 
@@ -32,7 +32,7 @@ model = get_model(args['ind'], args['model_arch'], test_oe=args['test_oe'])
 
 # ----- load dataset -----
 transform_iid = get_transform(args['ind'])
-transform_ood = get_transform(args['ood'],rotation=args['rotation'])
+transform_ood = get_transform(args['ood'])
 std = get_std(args['ind'])
 ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])

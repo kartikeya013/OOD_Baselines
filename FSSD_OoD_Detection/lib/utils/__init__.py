@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 def split_dataloader(datasetname, dataloader, sizes=[1000,-1], random=False, seed=42):
-    assert datasetname in ["cifar10", "cifar100", "svhn", "cifar10_shift", "fmnist", "mnist", 
+    assert datasetname in ["cifar10", "cifar100", "svhn", "cifar10_shift", "fmnist", "mnist","mnist_a","mnist_b" ,
                            "tiny_imagenet", "tiny_imagenet_crop", "tiny_imagenet_resize","dogs50B_shift",
                            "ms1m", "IJB-C", "imagenet", "imagenet_shift", "noise", "celeba", 
                            "celeba_blur", "dogs50A","dogs50B","non-dogs","dogs100","cifar10-corrupt",
@@ -26,13 +26,14 @@ def split_dataloader(datasetname, dataloader, sizes=[1000,-1], random=False, see
         
     dataloaders = []
     data = dataloader.dataset.data
+    print(data.size())
     if "targets" in dataloader.dataset.__dict__.keys():
         targets = np.array(dataloader.dataset.targets)
     elif "labels" in dataloader.dataset.__dict__.keys():
         targets = np.array(dataloader.dataset.labels)
     else:
         targets = None
-    
+    print(np.shape(targets))
     total = len(dataloader.dataset)
     if random:
         np.random.seed(seed)
@@ -40,37 +41,72 @@ def split_dataloader(datasetname, dataloader, sizes=[1000,-1], random=False, see
     else:
         idxs = list(range(total))
     s = 0
-    for size in sizes:
-        if size == -1:
-            t = deepcopy(dataloader)
-            t.dataset.data = data[idxs[s:]]
-            t.sampler.data_source.data = data[idxs[s:]]
-            if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-part","fmnist-part"]:
-                t.targets = targets[idxs[s:]].tolist()
-                t.sampler.data_source.targets = targets[idxs[s:]].tolist()
-            elif datasetname in ["svhn"]:
-                t.labels = targets[idxs[s:]].tolist()
-                t.sampler.data_source.labels = targets[idxs[s:]].tolist()
-            elif datasetname in ['noise']:
-                pass
+    if datasetname in ["mnist_a","mnist_b"]:
+        for size in sizes:
+            if size == -1:
+                dataset = data[idxs[s:]]
+                if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-part","fmnist-part","mnist_a","mnist_b"]:
+                    targets = targets[idxs[s:]].tolist()
+                    # t.sampler.data_source.targets = targets[idxs[s:]].tolist()
+                else:
+                    raise NotImplementedError
+                train_data = []
+                for i in range(len(dataset)):
+                    train_data.append([dataset[i], targets[i]])
+                t = torch.utils.data.DataLoader(train_data, shuffle=True, batch_size=64)
+                print("B: ",len(t))
             else:
-                raise NotImplementedError
-        else:
-            t = deepcopy(dataloader)
-            t.dataset.data = data[idxs[s:s+size]]
-            t.sampler.data_source.data = data[idxs[s:s+size]]
-            if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-corrupt","cifar10-part","fmnist-part","fmnist-corrupt"]:
-                t.targets = targets[idxs[s:s+size]].tolist()
-                t.sampler.data_source.targets = targets[idxs[s:s+size]].tolist()
-            elif datasetname in ["svhn"]:
-                t.labels = targets[idxs[s:s+size]].tolist()
-                t.sampler.data_source.labels = targets[idxs[s:s+size]].tolist()
-            elif datasetname in ['noise']:
-                pass
+                dataset = data[idxs[s:s+size]]
+                # print(data[idxs[s:s+size]].size())
+                # t.sampler.data_source.data = data[idxs[s:s+size]]
+                if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-corrupt","cifar10-part","fmnist-part","fmnist-corrupt","mnist_a","mnist_b"]:
+                    targetlist = targets[idxs[s:s+size]].tolist()
+                else:
+                    raise NotImplementedError
+                s += size
+                train_data = []
+                for i in range(len(dataset)):
+                    train_data.append([dataset[i], targetlist[i]])
+                t = torch.utils.data.DataLoader(train_data, shuffle=True, batch_size=64)
+                print("A: ",len(t))
+            dataloaders.append(t)
+    else:
+        for size in sizes:
+            if size == -1:
+                t = deepcopy(dataloader)
+                t.dataset.data = data[idxs[s:]]
+                t.sampler.data_source.data = data[idxs[s:]]
+                if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-part","fmnist-part"]:
+                    t.targets = targets[idxs[s:]].tolist()
+                    t.sampler.data_source.targets = targets[idxs[s:]].tolist()
+                elif datasetname in ["svhn"]:
+                    t.labels = targets[idxs[s:]].tolist()
+                    t.sampler.data_source.labels = targets[idxs[s:]].tolist()
+                elif datasetname in ['noise']:
+                    pass
+                else:
+                    raise NotImplementedError
+                print("B: ",len(t))
             else:
-                raise NotImplementedError
-            s += size
-        dataloaders.append(t)
+                t = deepcopy(dataloader)
+                print(type(data))
+                t.dataset.data = data[idxs[s:s+size]]
+                print(data[idxs[s:s+size]].size())
+                t.sampler.data_source.data = data[idxs[s:s+size]]
+                if datasetname in ["cifar10", "cifar100", "fmnist", "mnist","cifar10-corrupt","cifar10-part","fmnist-part","fmnist-corrupt"]:
+                    t.targets = targets[idxs[s:s+size]].tolist()
+                    print(len(t.targets))
+                    t.sampler.data_source.targets = targets[idxs[s:s+size]].tolist()
+                elif datasetname in ["svhn"]:
+                    t.labels = targets[idxs[s:s+size]].tolist()
+                    t.sampler.data_source.labels = targets[idxs[s:s+size]].tolist()
+                elif datasetname in ['noise']:
+                    pass
+                else:
+                    raise NotImplementedError
+                s += size
+                print("A: ",len(t))
+            dataloaders.append(t)
     return dataloaders
 
 
