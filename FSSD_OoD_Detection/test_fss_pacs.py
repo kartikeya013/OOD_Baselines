@@ -4,7 +4,6 @@ import pickle
 
 import numpy as np
 import torch
-import torchvision
 from torchvision import transforms
 from loguru import logger
 
@@ -33,64 +32,22 @@ parser.add_argument('--rotation', type=int, default=30, help='rotation angle in 
 args = vars(parser.parse_args())
 print(args)
 
-# # ----- load pre-trained model -----
-# model = get_model(args['ind'], args['model_arch'])
-
-# # ----- load dataset -----
-# transform_iid = get_transform(args['ind'])
-# transform_ood = get_transform(args['ood'],rotation=args['rotation'])
-# std = get_std(args['ind'])
-# img_size = get_img_size(args['ind'])
-# inp_channel = get_inp_channel(args['ind'])
-# batch_size = args['batch_size'] # recommend: 64 for ImageNet, CelebA, MS1M
-# input_process = args['inp_process']
-
-# ind_test_loader = get_dataloader(args['ind'], transform_iid, "test", dataroot=args['dataroot'], batch_size=batch_size)
-# ood_test_loader = get_dataloader(args['ood'], transform_ood, "test", dataroot=args['dataroot'], batch_size=batch_size)
-# ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test = split_dataloader(args['ind'], ind_test_loader, [500, 500, -1], random=True)
-# ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataloader(args['ood'], ood_test_loader, [500,500, -1], random=True)
-
-
 # ----- load pre-trained model -----
-model = get_model(args['ind'], args['model_arch'], test_oe=args['test_oe'])
+model = get_model(args['ind'], args['model_arch'])
 
 # ----- load dataset -----
-transform = transforms.Compose([transforms.Resize((28,28)),transforms.ToTensor(),])
-img_size = 28
-inp_channel = 3
-batch_size = args['batch_size'] 
-# transform_ood = transforms.Compose([transforms.ToTensor(),])
-# std = get_std(args['ind']) ##TODO
-# ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
-# ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
-def get_D(dataName):
-    return torchvision.datasets.ImageFolder("./lib/training/pacs_training/data/kfold/{}".format(dataName), transform=transform)
+transform_iid = get_transform(args['ind'])
+transform_ood = get_transform(args['ood'],rotation=args['rotation'])
+std = get_std(args['ind'])
+img_size = get_img_size(args['ind'])
+inp_channel = get_inp_channel(args['ind'])
+batch_size = args['batch_size'] # recommend: 64 for ImageNet, CelebA, MS1M
+input_process = args['inp_process']
 
-def split_dataset(dataset):
-    n = len(dataset)
-    l = torch.utils.data.random_split(dataset, [int(0.05*n),int(0.05*n),n-int(0.05*n)-int(0.05*n)])
-    print(len(l[0]),len(l[1]),len(l[2]))
-    return torch.utils.data.DataLoader(l[0] , batch_size=args['batch_size'], shuffle=True, num_workers=2),torch.utils.data.DataLoader(l[1] , batch_size=args['batch_size'], shuffle=True, num_workers=2),torch.utils.data.DataLoader(l[2] , batch_size=args['batch_size'], shuffle=True, num_workers=2)
-# ind_test_loader = torch.utils.data.DataLoader(get_D(args['ind']) , batch_size=args['batch_size'], shuffle=True, num_workers=2)
-# ood_test_loader = torch.utils.data.DataLoader(get_D(args['ood']), batch_size=args['batch_size'], shuffle=False, num_workers=2)
-# ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test = split_dataloader(args['ind'], ind_test_loader, [500,500,-1])
-# ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataloader(args['ood'], ood_test_loader, [500,500,-1])
-ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test = split_dataset(get_D(args['ind']))
-ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataset(get_D(args['ood']))
-
-loader = ind_dataloader_test
-
-mean = 0.
-std = 0.
-for images, _ in loader:
-    batch_samples = images.size(0) # batch size (the last batch can have smaller size!)
-    images = images.view(batch_samples, images.size(1), -1)
-    mean += images.mean(2).sum(0)
-    std += images.std(2).sum(0)
-
-mean /= len(loader.dataset)
-std /= len(loader.dataset)
-print("STD: ",std)
+ind_test_loader = get_dataloader(args['ind'], transform_iid, "test", dataroot=args['dataroot'], batch_size=batch_size)
+ood_test_loader = get_dataloader(args['ood'], transform_ood, "test", dataroot=args['dataroot'], batch_size=batch_size)
+ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test = split_dataloader(args['ind'], ind_test_loader, [500, 500, -1], random=True)
+ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataloader(args['ood'], ood_test_loader, [500,500, -1], random=True)
 
 
 from lib.inference import get_feature_dim_list
