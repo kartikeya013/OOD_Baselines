@@ -4,6 +4,7 @@ import pickle
 
 import numpy as np
 import torch
+import torchvision
 from torchvision import transforms
 from loguru import logger
 from lib.utils import split_dataloader
