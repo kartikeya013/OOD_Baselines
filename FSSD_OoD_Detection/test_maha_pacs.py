@@ -64,7 +64,7 @@ def get_D(dataName):
 
 def split_dataset1(dataset):
     n = len(dataset)
-    l = torch.utils.data.random_split(dataset, [int(0.65*n)n-int(0.65*n)])
+    l = torch.utils.data.random_split(dataset, [int(0.65*n),n-int(0.65*n)])
     # print(len(l[0]),len(l[1]),len(l[2]))
     return l[0],l[1]
 
