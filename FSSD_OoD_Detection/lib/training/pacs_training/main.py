@@ -24,7 +24,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--weight_decay', '-w', default=5e-4, type=float, help='weight_decay')
-parser.add_argument('--rotation',default=30,type=int, help='angle for rotation')
+# parser.add_argument('--rotation',default=30,type=int, help='angle for rotation')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 print(args)
@@ -34,18 +34,18 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
 print('==> Preparing data..')
-transform_train = transforms.Compose([
-    # transforms.RandomCrop(32, padding=4),
-    # transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+# transform_train = transforms.Compose([
+#     # transforms.RandomCrop(32, padding=4),
+#     # transforms.RandomHorizontalFlip(),
+#     transforms.ToTensor(),
+#     # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+# ])
 
-transform_test = transforms.Compose([
-    transforms.RandomRotation((args.rotation,args.rotation)),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+# transform_test = transforms.Compose([
+#     transforms.RandomRotation((args.rotation,args.rotation)),
+#     transforms.ToTensor(),
+#     # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+# ])
 transform = transforms.Compose([
     transforms.Resize((28,28)),
     transforms.ToTensor(),
@@ -73,7 +73,7 @@ classes = ('0', '1', '2', '3', '4', '5', '6')
 # Model
 print('==> Building model..')
 net = ResNet34() 
-netName = 'resnet_pacs_'+str(args.rotation)
+netName = 'resnet_pacs_art_painting'
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -114,7 +114,7 @@ def train(epoch):
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
-def test(epoch):
+def test2(epoch):
     global best_acc
     net.eval()
     test_loss = 0
@@ -132,6 +132,27 @@ def test(epoch):
             correct += predicted.eq(targets).sum().item()
 
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
+    
+def test(epoch):
+    global best_acc
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(trainloader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+
+            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
@@ -154,6 +175,7 @@ def test(epoch):
 for epoch in range(start_epoch, start_epoch+50):
     train(epoch)
     test(epoch)
+    test2(epoch)
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr/10,
                       momentum=0.9, weight_decay=args.weight_decay)
@@ -161,6 +183,7 @@ optimizer = optim.SGD(net.parameters(), lr=args.lr/10,
 for epoch in range(start_epoch+50, start_epoch+75):
     train(epoch)
     test(epoch)
+    test2(epoch)
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr/100,
                       momentum=0.9, weight_decay=args.weight_decay)
@@ -168,3 +191,4 @@ optimizer = optim.SGD(net.parameters(), lr=args.lr/100,
 for epoch in range(start_epoch+75, start_epoch+100):
     train(epoch)
     test(epoch)
+    test2(epoch)

@@ -21,6 +21,7 @@ key2model_path = {
     "fmnist_lenet": "pre_trained/lenet_fmnist.pth",
     "mnist_resnet": "pre_trained/resnet_mnist.pth",
     "mnist_a_resnet": "pre_trained/resnet_mnist_a.pth",
+    "art_painting_resnet": "pre_trained/resnet_pacs_art_painting.pth",
     "cifar10_resnet": "pre_trained/resnet_cifar10.pth",
     "fmnist_lenet_oe"       : "pre_trained/lenet_fmnist_oe.pth",
     "cifar10_resnet_oe"     : "pre_trained/resnet_cifar10_oe.pth",
@@ -33,6 +34,7 @@ key2model_arch = {
     "mnist_resnet": resnet.ResNet34(num_c=10),
     "mnist_a_resnet": resnet.ResNet34(num_c=10),
     "fmnist_lenet": lenet.LeNet(),
+    "art_painting_resnet": resnet.ResNet34(num_c=7),
 }
 
 def get_modeldir_ens(ind, model_arch):
