@@ -72,8 +72,8 @@ classes = ('0', '1', '2', '3', '4', '5', '6')
 
 # Model
 print('==> Building model..')
-net = ResNet34() 
-netName = 'resnet_pacs_art_painting'
+net = ResNet34()
+netName = 'resnet_pacs_' + inDist
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)

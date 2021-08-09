@@ -52,13 +52,14 @@ print(args)
 
 
 # ----- load pre-trained model -----
-model = get_model(args['ind'], args['model_arch'], test_oe=args['test_oe'])
+model = get_model(args['ind'], args['model_arch'])
 
 # ----- load dataset -----
 transform = transforms.Compose([transforms.Resize((28,28)),transforms.ToTensor(),])
 img_size = 28
 inp_channel = 3
 batch_size = args['batch_size'] 
+input_process = args['inp_process']
 # transform_ood = transforms.Compose([transforms.ToTensor(),])
 # std = get_std(args['ind']) ##TODO
 # ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
