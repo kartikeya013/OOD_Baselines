@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 import os
 import argparse
 
-from resnet import ResNet34
+from resnet import ResNet50
 import os, sys
 if os.isatty(sys.stdout.fileno()):
     from utils import progress_bar
@@ -24,7 +24,6 @@ import numpy as np
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--weight_decay', '-w', default=5e-4, type=float, help='weight_decay')
-parser.add_argument('--rotation',default=30,type=int, help='angle for rotation')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 print(args)
@@ -41,17 +40,15 @@ transform_train = transforms.Compose([
     # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
-transform_test = transforms.Compose([
-    transforms.RandomRotation((args.rotation,args.rotation)),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+def get_D_iid():
+    return torchvision.datasets.ImageFolder("/home/cse/btech/cs1180349/OOD_Baselines/OOD_Baselines/FSSD_OoD_Detection/data/datasets/imagenet-a/", transform=transform)
 
-trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+def get_D_ood():
+    return torchvision.datasets.ImageFolder("./data/imagenet-r/", transform=transform)
 
-testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=128, shuffle=False, num_workers=2)
+trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=128, shuffle=True, num_workers=2)
+testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=128, shuffle=True, num_workers=2)
+
 
 
 # for i,batch in enumerate(trainloader):
@@ -60,12 +57,12 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=128, shuffle=False,
  
 # plt.show()
 
-classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+# classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
 # Model
 print('==> Building model..')
 net = ResNet34() 
-netName = 'resnet_mnist_'+str(args.rotation)
+netName = 'resnet_imagenetr'
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)

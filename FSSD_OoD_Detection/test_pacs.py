@@ -10,3 +10,5 @@ for m in method:
         		f = open('./'+m+'/'+ind+'_'+ood+".txt", "w")
         		subprocess.call(['python', 'test_'+m+'_pacs.py', '--ind',ind,'--ood',ood,'--model_arch','resnet'],stdout=f)
         		print('############################\n'+'Method: '+m+'\n\t--> In-distribution:'+ind+'\n\t--> Out-Distribution:'+ood+'\nDone')
+
+
