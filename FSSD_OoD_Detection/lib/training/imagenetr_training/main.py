@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 import os
 import argparse
 
-from resnet import ResNet50
+from resnet import ResNet50,ResNet34
 import os, sys
 if os.isatty(sys.stdout.fileno()):
     from utils import progress_bar
@@ -40,14 +40,16 @@ transform_train = transforms.Compose([
     # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
+transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
+
 def get_D_iid():
     return torchvision.datasets.ImageFolder("/home/cse/btech/cs1180349/OOD_Baselines/OOD_Baselines/FSSD_OoD_Detection/data/datasets/imagenet-a/", transform=transform)
 
 def get_D_ood():
     return torchvision.datasets.ImageFolder("./data/imagenet-r/", transform=transform)
 
-trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=128, shuffle=True, num_workers=2)
-testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=128, shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=64, shuffle=True, num_workers=2)
+testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=64, shuffle=True, num_workers=2)
 
 
 
@@ -61,8 +63,8 @@ testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=128, shuffle=T
 
 # Model
 print('==> Building model..')
-net = ResNet34() 
-netName = 'resnet_imagenetr'
+net = ResNet50(num_classes=200) 
+netName = 'resnet_imagenetr2'
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -82,6 +84,7 @@ optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=a
 
 # Training
 def train(epoch):
+    global best_acc
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
@@ -99,32 +102,12 @@ def train(epoch):
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-
+        print(predicted,targets)
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
-def test(epoch):
-    global best_acc
-    net.eval()
-    test_loss = 0
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = net(inputs)
-            loss = criterion(outputs, targets)
-
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-
     # Save checkpoint.
-    file1 = open("myfile.txt", "w")  # append mode
+    file1 = open("myfile.txt", "w") 
     file1.write(str(epoch)+"\n")
     file1.close()
     acc = 100.*correct/total
@@ -139,6 +122,27 @@ def test(epoch):
             os.mkdir('checkpoint')
         torch.save(state, './checkpoint/{}.pth'.format(netName))
         best_acc = acc
+
+def test(epoch):
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+            print(predicted,targets)
+            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
+    
 
 for epoch in range(start_epoch, start_epoch+50):
     train(epoch)

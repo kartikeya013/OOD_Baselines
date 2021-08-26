@@ -7,8 +7,6 @@ import torch
 import torchvision
 from torchvision import transforms
 from loguru import logger
-from sklearn.model_selection import train_test_split
-import torchvision.models as models
 
 from lib.utils.exp import (
     get_model,
@@ -23,11 +21,22 @@ parser = argparse.ArgumentParser(description='Description of your program')
 parser.add_argument('-i','--ind', type=str, help='in distribution dataset', required=True)
 parser.add_argument('-o','--ood', type=str, help='out of distribution dataset', required=True)
 parser.add_argument('-m','--model_arch', type=str, help='model architecture', required=True)
-parser.add_argument('-b','--batch_size', type=int, default=64)
-parser.add_argument('--dataroot',type=str, help='datatset stroage directory',default='./data/datasets')
-parser.add_argument('--test_oe', action='store_true', help='whether to use model trained with outlier exposure')
+parser.add_argument('-b','--batch_size', type=int, help='batch size', default=512)
+parser.add_argument('--dataroot',type=str, help='datatset stroage directory', default='./data/datasets')
 args = vars(parser.parse_args())
 print(args)
+
+# # ----- load pre-trained model -----
+# model = get_model(args['ind'], args['model_arch'])
+
+# # ----- load dataset -----
+# transform_iid = get_transform(args['ind'])
+# transform_ood = get_transform(args['ood'],rotation=args['rotation'])
+# std = get_std(args['ind'])
+# ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
+# ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
+# ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test = split_dataloader(args['ind'], ind_test_loader, [500,500,-1], random=True)
+# ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataloader(args['ood'], ood_test_loader, [500,500,-1], random=True)
 
 # ----- load pre-trained model -----
 model = get_model(args['ind'], args['model_arch'])
@@ -35,7 +44,7 @@ model = get_model(args['ind'], args['model_arch'])
 # ----- load dataset -----
 transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
 # transform_ood = transforms.Compose([transforms.ToTensor(),])
-# std = get_std(args['ind']) ##
+# std = get_std(args['ind']) ##TODO
 # ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 # ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 def get_D_iid():
@@ -69,26 +78,24 @@ for images, _ in loader:
 mean /= len(loader.dataset)
 std /= len(loader.dataset)
 print("STD: ",std)
-# ----- Get Maximum Softmax Probability using get_ODIN_score function -----
-from lib.inference.ODIN import get_ODIN_score
 
-# No need to search temperature and magnitude for baseline and OE
-best_temperature = 1.0
-best_magnitude = 0.0
+# ----- Calculate best temperature and magnitude for input pre-processing -----
+from lib.inference.ODIN import search_ODIN_hyperparams, get_ODIN_score
+logger.info("search ODIN params")
+best_temperature, best_magnitude = search_ODIN_hyperparams(model, ind_dataloader_val_for_train, ood_dataloader_val_for_train, ind_dataloader_val_for_test, ood_dataloader_val_for_test, std=std)
+print("best params: ", best_temperature, best_magnitude)
 
-ind_scores_test = get_ODIN_score(model, ind_dataloader_test, best_magnitude, best_temperature, std=std)
-ood_scores_test = get_ODIN_score(model, ood_dataloader_test, best_magnitude, best_temperature, std=std)
-ind_features_test = ind_scores_test.reshape(-1,1)
-ood_features_test = ood_scores_test.reshape(-1,1)[:len(ind_features_test)]
-print("ind_features_test shape: {}".format(ind_features_test.shape))
-print("ood_features_test shape: {}".format(ood_features_test.shape))
-
+# ----- Calculate ODIN score for validation data -----
 ind_scores_val_for_train = get_ODIN_score(model, ind_dataloader_val_for_train, best_magnitude, best_temperature, std=std)
 ood_scores_val_for_train = get_ODIN_score(model, ood_dataloader_val_for_train, best_magnitude, best_temperature, std=std)
 ind_features_val_for_train = ind_scores_val_for_train.reshape(-1,1)
 ood_features_val_for_train = ood_scores_val_for_train.reshape(-1,1)
-print("ind_features_val_for_train shape: {}".format(ind_features_val_for_train.shape))
-print("ood_features_val_for_train shape: {}".format(ood_features_val_for_train.shape))
+
+# ----- Calculate ODIN score for test data -----
+ind_scores_test = get_ODIN_score(model, ind_dataloader_test, best_magnitude, best_temperature, std=std)
+ood_scores_test = get_ODIN_score(model, ood_dataloader_test, best_magnitude, best_temperature, std=std)[:len(ind_scores_test)]
+ind_features_test = ind_scores_test.reshape(-1,1)
+ood_features_test = ood_scores_test.reshape(-1,1)
 
 # ----- Train OoD detector using validation data -----
 from lib.metric import get_metrics, train_lr

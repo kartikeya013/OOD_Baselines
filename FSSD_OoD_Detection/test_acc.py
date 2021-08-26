@@ -20,6 +20,13 @@ import math
 import torch.nn as nn
 import torch.nn.init as init
 
+from lib.utils.exp import (
+    get_model,
+    get_transform,
+    get_mean, 
+    get_std,
+    get_dataloader,
+)
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
@@ -134,16 +141,16 @@ def format_time(seconds):
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = models.__dict__['resnet50'](pretrained=True)
-model =torch.nn.DataParallel(model)
-torch.cuda.set_device(0)
-model = model.cuda()
-loc = 'cuda:{}'.format(0)
-checkpoint = torch.load('./pre_trained/deepaugment.pth.tar', map_location=loc)
-model.load_state_dict(checkpoint['state_dict'])
-cudnn.benchmark = True
-
-transform = transforms.Compose([transforms.Resize((28,28)),transforms.ToTensor(),])
+# model = models.__dict__['resnet50'](pretrained=True)
+# model =torch.nn.DataParallel(model)
+# torch.cuda.set_device(0)
+# model = model.cuda()
+# loc = 'cuda:{}'.format(0)
+# checkpoint = torch.load('./pre_trained/deepaugment.pth.tar', map_location=loc)
+# model.load_state_dict(checkpoint['state_dict'])
+# cudnn.benchmark = True
+model = get_model('imagenetr', 'resnet')
+transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
 
 def get_D_iid():
     return torchvision.datasets.ImageFolder("./data/datasets/imagenet-a/", transform=transform)
@@ -169,15 +176,16 @@ def test(epoch,tl):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-
+            
             test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-
+            # if batch_idx%10==0:
+                # print(targets,predicted)
             progress_bar(batch_idx, len(tl), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
 
-test(100,trainloader)
-test(100,testloader)
+test(10,trainloader)
+test(10,testloader)

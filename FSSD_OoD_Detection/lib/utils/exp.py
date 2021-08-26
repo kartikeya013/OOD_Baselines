@@ -25,9 +25,11 @@ key2model_path = {
     "photo_resnet": "pre_trained/resnet_pacs_photo.pth",
     "cartoon_resnet": "pre_trained/resnet_pacs_cartoon.pth",
     "sketch_resnet": "pre_trained/resnet_pacs_sketch.pth",
-    "cifar10_resnet": "pre_trained/resnet_cifar10.pth",
+    "cifar10_resnet": "pre_trained/ test_oe=args['test_oe']test_oe=args['test_oe']resnet_cifar10.pth",
     "fmnist_lenet_oe"       : "pre_trained/lenet_fmnist_oe.pth",
     "cifar10_resnet_oe"     : "pre_trained/resnet_cifar10_oe.pth",
+    "imageneta_resnet"     : "pre_trained/resnet_imagenetr2.pth",
+    "imagenetr_resnet"     : "pre_trained/resnet_imagenetr2.pth",
 }
 
 
@@ -41,6 +43,8 @@ key2model_arch = {
     "sketch_resnet":resnet.ResNet34(num_c=7),
     "cartoon_resnet": resnet.ResNet34(num_c=7),
     "photo_resnet": resnet.ResNet34(num_c=7),    
+    "imagenetr_resnet": resnet_imagenet.ResNet50(num_classes=200),    
+    "imageneta_resnet": resnet_imagenet.ResNet50(num_classes=200),    
 }
 
 def get_modeldir_ens(ind, model_arch):

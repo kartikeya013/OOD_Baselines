@@ -3,3 +3,6 @@ pre_trained/**
 *.pth
 *.txt
 *.pt
+*.tar
+./FSSD_OoD_Detection/data/**
+./FSSD_OoD_Detection/lib/training/pacs_training/data/**

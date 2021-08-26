@@ -260,5 +260,5 @@ def _resnet(arch, block, layers, **kwargs):
 def resnet34(num_classes=10):
     return ResNet(BasicBlock, [3,4,6,3], num_classes=num_classes)
 
-def resnet50(**kwargs):
-    return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], **kwargs)
+def ResNet50(num_classes=200):
+    return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], num_classes=num_classes)
