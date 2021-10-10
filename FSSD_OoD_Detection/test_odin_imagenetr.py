@@ -48,10 +48,10 @@ transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor
 # ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 # ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 def get_D_iid():
-    return torchvision.datasets.ImageFolder("./data/datasets/imagenet-a/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-200/", transform=transform)
 
 def get_D_ood():
-    return torchvision.datasets.ImageFolder("./lib/training/imagenetr_training/data/imagenet-r/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-r/", transform=transform)
 
 def split_dataset(dataset):
     n = len(dataset)

@@ -28,6 +28,9 @@ parser.add_argument('--resume', '-r', action='store_true', help='resume from che
 args = parser.parse_args()
 print(args)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+print(device)
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -43,13 +46,13 @@ transform_train = transforms.Compose([
 transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
 
 def get_D_iid():
-    return torchvision.datasets.ImageFolder("/home/cse/btech/cs1180349/OOD_Baselines/OOD_Baselines/FSSD_OoD_Detection/data/datasets/imagenet-a/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-200/", transform=transform)
 
 def get_D_ood():
-    return torchvision.datasets.ImageFolder("./data/imagenet-r/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-r/", transform=transform)
 
-trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=64, shuffle=True, num_workers=2)
-testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=64, shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=128, shuffle=True, num_workers=2)
+testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=128, shuffle=True, num_workers=2)
 
 
 
@@ -63,8 +66,8 @@ testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=64, shuffle=Tr
 
 # Model
 print('==> Building model..')
-net = ResNet50(num_classes=200) 
-netName = 'resnet_imagenetr2'
+net = ResNet34(num_classes=200) 
+netName = 'resnet_imageneta'
 net = net.to(device)
 if device == 'cuda':
     net = torch.nn.DataParallel(net)
@@ -74,7 +77,7 @@ if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.pth')
+    checkpoint = torch.load('./checkpoint/{}.pth'.format(netName))
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
@@ -102,7 +105,6 @@ def train(epoch):
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-        print(predicted,targets)
         progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
@@ -138,7 +140,6 @@ def test(epoch):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-            print(predicted,targets)
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 

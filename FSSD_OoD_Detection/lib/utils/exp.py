@@ -28,8 +28,8 @@ key2model_path = {
     "cifar10_resnet": "pre_trained/ test_oe=args['test_oe']test_oe=args['test_oe']resnet_cifar10.pth",
     "fmnist_lenet_oe"       : "pre_trained/lenet_fmnist_oe.pth",
     "cifar10_resnet_oe"     : "pre_trained/resnet_cifar10_oe.pth",
-    "imageneta_resnet"     : "pre_trained/resnet_imagenetr2.pth",
-    "imagenetr_resnet"     : "pre_trained/resnet_imagenetr2.pth",
+    "imagenet-200_resnet"     : "pre_trained/resnet_imageneta.pth",
+    "imagenet-r_resnet"     : "pre_trained/resnet_imagenetr.pth",
 }
 
 
@@ -43,8 +43,8 @@ key2model_arch = {
     "sketch_resnet":resnet.ResNet34(num_c=7),
     "cartoon_resnet": resnet.ResNet34(num_c=7),
     "photo_resnet": resnet.ResNet34(num_c=7),    
-    "imagenetr_resnet": resnet_imagenet.ResNet50(num_classes=200),    
-    "imageneta_resnet": resnet_imagenet.ResNet50(num_classes=200),    
+    "imagenet-r_resnet": resnet_imagenet.resnet34(num_classes=200),    
+    "imagenet-200_resnet": resnet_imagenet.resnet34(num_classes=200),    
 }
 
 def get_modeldir_ens(ind, model_arch):
@@ -96,6 +96,7 @@ def get_std(ind):
         "mnist_a": (0.3081,),
         "mnist_b": (0.3081,),
         "svhn": (0.19803012447157134, 0.20101562471828877, 0.19703614172172396),
+        "imagenet-200": (0.2232, 0.2184, 0.2181),
     }[key]
 
 

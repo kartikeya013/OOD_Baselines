@@ -149,17 +149,17 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # checkpoint = torch.load('./pre_trained/deepaugment.pth.tar', map_location=loc)
 # model.load_state_dict(checkpoint['state_dict'])
 # cudnn.benchmark = True
-model = get_model('imagenetr', 'resnet')
+model = get_model('imagenet-200', 'resnet')
 transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
 
 def get_D_iid():
-    return torchvision.datasets.ImageFolder("./data/datasets/imagenet-a/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-200/", transform=transform)
 
 def get_D_ood():
-    return torchvision.datasets.ImageFolder("./lib/training/imagenetr_training/data/imagenet-r/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-r/", transform=transform)
 
-trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=64, shuffle=True, num_workers=2)
-testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=64, shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(get_D_iid() , batch_size=128, shuffle=True, num_workers=2)
+testloader = torch.utils.data.DataLoader(get_D_ood() , batch_size=128, shuffle=True, num_workers=2)
 
 
 criterion = nn.CrossEntropyLoss()
@@ -187,5 +187,7 @@ def test(epoch,tl):
                 % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
 
-test(10,trainloader)
-test(10,testloader)
+
+for i in range(10):
+    test(10,trainloader)
+    test(10,testloader)

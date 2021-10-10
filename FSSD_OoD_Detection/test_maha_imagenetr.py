@@ -51,18 +51,18 @@ model = get_model(args['ind'], args['model_arch'])
 
 # ----- load dataset -----
 transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor(),])
-img_size = 28
+img_size = 256
 inp_channel = 3
 batch_size = args['batch_size'] 
 # transform_ood = transforms.Compose([transforms.ToTensor(),])
-# std = get_std(args['ind']) ##TODO
+std = get_std(args['ind']) ##TODO
 # ind_test_loader = get_dataloader(args['ind'], transform_iid, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 # ood_test_loader = get_dataloader(args['ood'], transform_ood, "test",dataroot=args['dataroot'],batch_size=args['batch_size'])
 def get_D_iid():
-    return torchvision.datasets.ImageFolder("./data/datasets/imagenet-a/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-200/", transform=transform)
 
 def get_D_ood():
-    return torchvision.datasets.ImageFolder("./lib/training/imagenetr_training/data/imagenet-r/", transform=transform)
+    return torchvision.datasets.ImageFolder("/home/seshank_kartikeya/scratch/imagenet-r/", transform=transform)
 
 def split_dataset1(dataset):
     n = len(dataset)
@@ -85,18 +85,18 @@ ind_dataloader_val_for_train, ind_dataloader_val_for_test, ind_dataloader_test =
 ood_dataloader_val_for_train, ood_dataloader_val_for_test, ood_dataloader_test = split_dataset(get_D_ood())
 
 
-loader = ind_train_loader
+# loader = ind_train_loader
 
-mean = 0.
-std = 0.
-for images, _ in loader:
-    batch_samples = images.size(0) # batch size (the last batch can have smaller size!)
-    images = images.view(batch_samples, images.size(1), -1)
-    mean += images.mean(2).sum(0)
-    std += images.std(2).sum(0)
+# mean = 0.
+# std = 0.
+# for images, _ in loader:
+#     batch_samples = images.size(0) # batch size (the last batch can have smaller size!)
+#     images = images.view(batch_samples, images.size(1), -1)
+#     mean += images.mean(2).sum(0)
+#     std += images.std(2).sum(0)
 
-mean /= len(loader.dataset)
-std /= len(loader.dataset)
+# mean /= len(loader.dataset)
+# std /= len(loader.dataset)
 print("STD: ",std)
 
 
